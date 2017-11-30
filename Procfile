@@ -1,0 +1,1 @@
+web: java -Dswarm.http.port=$PORT -jar target/CellComparatorApp-swarm.jar  

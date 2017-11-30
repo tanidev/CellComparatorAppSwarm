@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui" xmlns:b="http://bootsfaces.net/ui"
+	template="/WEB-INF/template.xhtml">
+
+	<ui:define name="content">
+		<h:form id="comparatorForm" prependId="false">
+			<p:wizard showNavBar="false" showStepStatus="false"
+				widgetVar="wizardVar">
+				<p:tab id="chooseSmartphone">
+					<b:jumbotron>
+						<b:container fluid="true" style="margin: 20px 20px 20px 20px;">
+							<p>Escolha os smartphones para comparar</p>
+							<b:row>
+								<b:column span="3">
+									<b:inputText required="false" value="#{comparatorBean.filter.smartphoneName}" />
+								</b:column>
+								<b:column span="3">
+									<b:selectOneMenu required="false" value="#{comparatorBean.filter.manufacturer}">
+										<f:selectItem itemLabel="Selecione um fabricante" itemValue=""/>
+										<f:selectItems value="#{comparatorBean.manufacturers}" var="m"
+											itemLabel="#{m}" itemValue="#{m}" />
+									</b:selectOneMenu>
+								</b:column>
+								<b:column span="2">
+									<b:commandButton actionListener="#{comparatorBean.find}" look="info" iconAwesome="search"
+										value="Pesquisar" style="width: 100%; font-size: 14px;" ajax="true" update="@form" />
+								</b:column>
+							</b:row>
+							<br/>
+							<b:panel id="panelModelos" title="Modelos" collapsible="false">
+								<p:dataGrid value="#{comparatorBean.smartphones}"
+									var="smartphone" columns="3" layout="grid" paginator="true" rows="6">
+									<b:panel title="#{smartphone.name}" collapsible="false" style="text-align: center;"
+										rendered="#{!comparatorBean.smartphonesToCompare.contains(smartphone)}">
+										<b:row style="padding-top: 10px;">
+											<p:graphicImage value="#{smartphoneImages.image}" width="200" height="200">
+												<f:param name="smartphoneId" value="#{smartphone.smartphoneId}" />
+											</p:graphicImage>
+										</b:row>
+										<b:row style="padding-top: 10px;">
+											<h:outputText value="#{smartphone.manufacturer}" />
+										</b:row>
+										<b:row style="padding-top: 10px;">
+											<b:commandButton value="Comparar" look="success" iconAwesome="sort-amount-desc"
+												actionListener="#{comparatorBean.addToCompare}"
+												ajax="true" update="@form">
+												<f:attribute name="sp" value="#{smartphone}" />
+											</b:commandButton>
+										</b:row>
+									</b:panel>
+									<b:panel title="#{smartphone.name}" collapsible="false" style="text-align: center;"
+										rendered="#{comparatorBean.smartphonesToCompare.contains(smartphone)}" look="success">
+										<b:row style="padding-top: 10px;">
+											<p:graphicImage value="#{smartphoneImages.image}" width="200" height="200">
+												<f:param name="smartphoneId" value="#{smartphone.smartphoneId}" />
+											</p:graphicImage>
+										</b:row>
+										<b:row style="padding-top: 10px;">
+											<h:outputText value="#{smartphone.manufacturer}" />
+										</b:row>
+										<b:row style="padding-top: 10px;">
+											<b:commandButton value="Comparar" iconAwesome="sort-amount-desc"
+												actionListener="#{comparatorBean.addToCompare}"
+												ajax="true" update="@form"
+												disabled="#{comparatorBean.smartphonesToCompare.contains(smartphone)}">
+												<f:attribute name="sp" value="#{smartphone}" />
+											</b:commandButton>
+										</b:row>
+									</b:panel>
+								</p:dataGrid>
+							</b:panel>
+						</b:container>
+					</b:jumbotron>
+
+				</p:tab>
+				<p:tab id="showInformations">
+					<b:jumbotron>
+						<b:container fluid="true" style="margin: 20px 20px 20px 20px;">
+							<b:row>
+								<b:column style="text-align: center">
+									<p>Resultado da comparação</p>
+								</b:column>
+							</b:row>
+							<b:row>
+								<b:column style="text-align: center">
+									Legenda: <i style="color: green" class="fa fa-check" /> Ganhou /  <i style="color: red" class="fa fa-remove" /> Perdeu /
+									<i class="fa fa-minus" /> Empatou / <i class="fa fa-ban" /> Não suporta 
+								</b:column>
+							</b:row>
+							<br/>
+							<b:row>
+								<b:column span="6" style="text-align: center;">
+								
+									<p:dataTable
+										value="#{comparatorBean.resultCompare.comparableCharacteristic1}"
+										var="characteristic"  scrollable="false">
+										<f:facet name="header">
+											<p:graphicImage style="margin: 10px 10px 10px 10px" value="#{smartphoneImages.image}" width="130" height="130">
+												<f:param name="smartphoneId" value="#{comparatorBean.resultCompare.smartphone1.smartphoneId}" />
+											</p:graphicImage><br/>
+											#{comparatorBean.smartphonesToCompare.get(0).name}
+										</f:facet>
+										<p:column>
+											<h:outputText value="#{characteristic.type.typeName}" />
+										</p:column>
+										<p:column >
+											<h:outputText value="#{characteristic.value} #{characteristic.description}" rendered="#{characteristic.value != null}" style="font-weight:bold;"/>
+											<h:outputText value="Não suporta." rendered="#{characteristic.value == null}" style="font-weight:bold;"/>
+										</p:column>
+										<p:column style="width: 10%; text-align: center;">
+											<p:outputPanel rendered="#{characteristic.result == 'WINNER'}"><i style="color: green" class="fa fa-check" /></p:outputPanel>
+											<p:outputPanel rendered="#{characteristic.result == 'LOOSER'}"><i style="color: red" class="fa fa-remove" /></p:outputPanel>
+											<p:outputPanel rendered="#{characteristic.result == 'DRAW'}"><i class="fa fa-minus" /></p:outputPanel>
+											<p:outputPanel rendered="#{characteristic.result == 'NOT_SUPPORTED'}"><i class="fa fa-ban" /></p:outputPanel>
+										</p:column>
+										<f:facet name="footer">
+											<b:commandButton value="Favoritar #{comparatorBean.resultCompare.smartphone1.name}"
+												actionListener="#{comparatorBean.favorite(comparatorBean.resultCompare.smartphone1)}"
+												rendered="#{comparatorBean.ranking == null}" update="@form"
+												iconAwesome="star" style="width: 100%;font-size: 14px;" ajax="true" look="warning" />
+										</f:facet>
+									</p:dataTable>
+									
+								</b:column>
+								<b:column span="6" style="text-align: center;">
+								
+									<p:dataTable
+										value="#{comparatorBean.resultCompare.comparableCharacteristic2}"
+										var="characteristic"  scrollable="false">
+										<f:facet name="header">
+											<p:graphicImage style="margin: 10px 10px 10px 10px" value="#{smartphoneImages.image}" width="130" height="130">
+												<f:param name="smartphoneId" value="#{comparatorBean.resultCompare.smartphone2.smartphoneId}" />
+											</p:graphicImage><br/>
+											#{comparatorBean.smartphonesToCompare.get(1).name}
+										</f:facet>
+										<p:column>
+											<h:outputText value="#{characteristic.type.typeName}" />
+										</p:column>
+										<p:column >
+											<h:outputText value="#{characteristic.value} #{characteristic.description}" rendered="#{characteristic.value != null}" style="font-weight:bold;"/>
+											<h:outputText value="Não suporta." rendered="#{characteristic.value == null}" style="font-weight:bold;"/>
+										</p:column>
+										<p:column style="width: 10%; text-align: center;">
+											<p:outputPanel rendered="#{characteristic.result == 'WINNER'}"><i style="color: green" class="fa fa-check" /></p:outputPanel>
+											<p:outputPanel rendered="#{characteristic.result == 'LOOSER'}"><i style="color: red" class="fa fa-remove" /></p:outputPanel>
+											<p:outputPanel rendered="#{characteristic.result == 'DRAW'}"><i class="fa fa-minus" /></p:outputPanel>
+											<p:outputPanel rendered="#{characteristic.result == 'NOT_SUPPORTED'}"><i class="fa fa-ban" /></p:outputPanel>
+										</p:column>
+										<f:facet name="footer">
+											<b:commandButton value="Favoritar #{comparatorBean.resultCompare.smartphone2.name}"
+												actionListener="#{comparatorBean.favorite(comparatorBean.resultCompare.smartphone2)}"
+												rendered="#{comparatorBean.ranking == null}" update="@form"
+												iconAwesome="star" style="width: 100%;font-size: 14px;" ajax="true" look="warning" />
+										</f:facet>
+									</p:dataTable>
+								</b:column>
+							</b:row>
+							<br/>
+							<b:row rendered="#{comparatorBean.ranking != null}">
+								<b:column style="text-align: center;">
+									<p>Meu favorito: #{comparatorBean.ranking.smartphone.name}</p>
+								</b:column>
+							</b:row>
+						</b:container>
+					</b:jumbotron>
+				</p:tab>
+			</p:wizard>
+		</h:form>
+	</ui:define>
+</ui:composition>
